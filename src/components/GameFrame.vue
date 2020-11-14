@@ -1,10 +1,11 @@
 <template>
   <div id="frame">
-    <div id="frameControl" :class="{inprocess: ingame}" v-if="!ingame || inprocess">
-      <button id="startGame" @click="gameStart" v-if="!ingame"> START</button>
+    <div id="frameControl" :class="{inprocess: gameStatus}" v-if="!gameStatus || inprocess">
+      <button id="startGame" @click="gameStart" v-if="!gameStatus"> START</button>
     </div>
     <div id="frameGame">
-      <div v-for="color in colors" class="card" :color="color" @click="showColor($event)"></div>
+      <div v-for="(color, index) in colors" class="card" :data-id="'color' + index" :color="color"
+           @click="showColor($event)"></div>
     </div>
   </div>
 </template>
@@ -13,25 +14,31 @@
 
 export default {
   name: "GameFrame",
-  props: ['colors'],
+  props: ['colors', 'gameStatus'],
   data() {
     return {
-      ingame: false,
       inprocess: false,
       moveCards: []
     }
   },
-  mounted() {
+  watch: {
+    gameStatus(val) {
+      if (!val) {
+        document.querySelectorAll('#frameGame .card').forEach(card => {
+          card.style.background = 'none';
+          card.style.pointerEvents = 'all';
+        })
+      }
 
+    }
   },
   methods: {
     gameStart() {
-      this.ingame = true;
-
-      this.$emit('gameStart', this.ingame);
+      this.$emit('gameStart', true);
     },
     showColor(event) {
       const elem = event.target;
+      if (this.moveCards.length === 1 && elem.getAttribute('data-id') === this.moveCards[0].getAttribute('data-id')) return false;
       this.moveCards.push(elem);
 
       elem.style.background = elem.getAttribute('color');
@@ -44,6 +51,9 @@ export default {
           setTimeout(() => {
             cards.forEach(card => card.style.background = 'none');
           }, 600)
+        } else {
+          cards.forEach(card => card.style.pointerEvents = 'none');
+          this.$emit('foundedCards', cards);
         }
 
         this.moveCards = [];
@@ -87,12 +97,13 @@ export default {
   font-weight: 700;
   color: #fff;
   text-align: center;
-  vertical-align: middle;
   border-radius: 8px;
   border: 2px solid #fff;
   font-size: 25px;
-  display: inline-block;
-  padding: 5%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 40px;
   cursor: pointer;
   transition: .7s;
   outline: none;

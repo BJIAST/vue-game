@@ -1,12 +1,19 @@
 <template>
   <div id="game">
-    <Dashboard :gameStatus="ingame" :moves="moves"></Dashboard>
-    <GameFrame :colors="colors" @gameStart="handleGameStart" @gameMove="handleMove"></GameFrame>
+    <Dashboard :gameStatus="ingame" :moves="moves" @resetGame="handleResetGame"></Dashboard>
+    <GameFrame
+        :gameStatus="ingame"
+        :colors="cards"
+               @gameStart="handleGameStart"
+               @gameMove="handleMove"
+               @foundedCards="handleOpened">
+    </GameFrame>
   </div>
 </template>
 <script>
 import Dashboard from "@/components/Dashboard";
-import GameFrame from "@//components/GameFrame";
+import GameFrame from "@/components/GameFrame";
+
 export default {
   name: "Game",
   components: {
@@ -17,7 +24,16 @@ export default {
     return {
       ingame: false,
       moves: 0,
-      colors: ['lightblue', 'darkgreen', 'black', 'grey', 'white', 'purple', 'darkred', 'blue']
+      openedCards: [],
+      cards: ['lightblue', 'darkgreen', 'black', 'grey', 'white', 'purple', 'darkred', 'blue']
+    }
+  },
+  watch: {
+    openedCards(val) {
+      if (val.length === this.cards.length / 2) {
+        alert(`Game finished!`);
+        this.reset();
+      }
     }
   },
   methods: {
@@ -26,11 +42,29 @@ export default {
     },
     handleMove() {
       this.moves += 1;
+    },
+    handleOpened(data) {
+      this.openedCards.push(data)
+    },
+    handleTimer(data) {
+      this.timer = data;
+    },
+    handleResetGame(){
+      this.reset();
+    },
+    reset(){
+      this.ingame = false;
+      this.moves = 0;
+      this.openedCards = [],
+      this.shuffle(this.cards);
+    },
+    shuffle(array) {
+      array.sort(() => Math.random() - 0.5);
     }
   },
   mounted() {
-    this.colors.push(...this.colors);
-    this.colors.sort(() => Math.random() - 0.5);
+    this.cards.push(...this.cards);
+    this.shuffle(this.cards);
   }
 }
 </script>
